@@ -38,7 +38,9 @@ pub fn resolve_op_value(
         .into_inner();
 
     let json_val = value.into_json().map_err(|e| anyhow!("{:?}", e))?;
-    let parsed_value = parse_value(json_val, operations_ls[1..].iter())?;
+    let parsed_value = parse_value(json_val, operations_ls[1..].iter())?
+        .trim_matches('\"')
+        .to_string();
     Ok(subtitution_map
         .get(&parsed_value)
         .unwrap_or(&&parsed_value)
@@ -46,12 +48,9 @@ pub fn resolve_op_value(
 }
 
 pub fn parse_value(value: Value, mut resolve_values: std::slice::Iter<'_, &str>) -> Result<String> {
-    println!("=====================");
-    println!("{:?}", value);
     let next_data = resolve_values
         .next()
         .ok_or(anyhow!("invalid combination of data"))?;
-    println!("{:?}", next_data);
     match value {
         serde_json::Value::Null => return Ok("".into()),
         serde_json::Value::Bool(data) => return Ok(data.to_string()),
@@ -112,8 +111,6 @@ mod tests {
             .1
             .clone()
             .into_inner();
-        let value =
-            resolve_op_value("details.more.gender", &doc_definition, &subtitutions).unwrap();
-        println!("value {:?}", value);
+        resolve_op_value("details.more.gender", &doc_definition, &subtitutions).unwrap();
     }
 }
